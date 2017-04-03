@@ -12,8 +12,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var tableView: UITableView!
     var refreshControl: UIRefreshControl!
-    var dataListA: [Int] = [0] // 原資料
-    var dataListB: [Int] = Array<Int>(1...300) // 要被載入的資料
+    var dataListA: [Int] = Array<Int>(1...20) // 原資料
+    var dataListB: [Int] = Array<Int>(21...300) // 要被載入的資料
     var startIndex: Int = 0 // 要被載入的資料的起始索引
     
     override func viewDidLoad() {
@@ -21,7 +21,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         self.view.backgroundColor = UIColor.white
         
         // 生成tableVeiw
-        self.tableView = UITableView(frame: CGRect(x: 0, y: 20, width: self.view.frame.size.width, height: self.view.frame.size.height), style: .plain)
+        self.tableView = UITableView(frame: CGRect(x: 0, y: 20, width: self.view.frame.size.width, height: self.view.frame.size.height - 20), style: .plain)
         self.tableView.backgroundColor = UIColor.white
         self.tableView.delegate = self
         self.tableView.dataSource = self
@@ -32,7 +32,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         self.refreshControl = UIRefreshControl()
         self.refreshControl.addTarget(self, action: #selector(ViewController.refresh), for: UIControlEvents.valueChanged)
         refreshControl.attributedTitle = NSAttributedString(string: "loading...")
-        self.tableView?.addSubview(refreshControl)
+        self.tableView?.addSubview(self.refreshControl)
     }
     
     // MARK: - DataSource
@@ -46,14 +46,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // ---------------------------------------------------------------------
     // 表格的儲存格設定
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        var cell: UITableViewCell? = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+        cell.textLabel?.text = String(dataListA[indexPath.row])
+        return cell
+    }
+    
+    // 當滾到最後一筆資料時，載入更多的資料
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        print("scrollView.contentOffset.y: \(scrollView.contentOffset.y)")
+        print("scrollView.frame.size.height: \(scrollView.frame.size.height)")
+        print("scrollView.contentSize.height: \(scrollView.contentSize.height)")
         
-        if cell == nil {
-            cell = UITableViewCell(style: UITableViewCellStyle.default, reuseIdentifier: "Cell")
+        // 當scrollView的contentOffset的y座標+scrollView的高「大於等於」scrollView的contentView的承載量時
+        if ((scrollView.contentOffset.y + scrollView.frame.size.height) >= scrollView.contentSize.height) {
+            self.refresh() // 載入資料
+            tableView.reloadData()
         }
-        cell!.textLabel?.text = String(dataListA[indexPath.row])
-        
-        return cell!
     }
     
     /// 載入資料
